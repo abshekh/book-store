@@ -2,7 +2,13 @@
 
 ## Routes
 ```
-@route   GET /books/
+@route   GET /version
+@desc    App version
+
+@route   GET /healthcheck
+@desc    Healthcheck API
+
+@route   GET /books
 @desc    Get all books
 @resp
 [
@@ -17,8 +23,6 @@
         "author": "J. R. R. Tolkien"
     }
 ]
-
-
 
 @route   GET /books/:id
 @desc    Get a book by id

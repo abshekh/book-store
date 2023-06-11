@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Main
   ( main
@@ -16,7 +17,9 @@ import qualified Repository.BookRepository as BR
 import Servant
 import Servant.API.Generic (Generic)
 
-type API = NamedRoutes Routes
+type API
+   = NamedRoutes Routes :<|> "version" :> Get '[ JSON] String :<|> "healthcheck" :> Get '[ JSON] String
+
 data Routes mode =
   Routes
     { _getAllBooks :: mode :- "books" :> Get '[ JSON] [Book]
@@ -35,7 +38,9 @@ app = serve (Proxy @API) server
         , _getBook = getBook
         , _postBook = postBook
         , _deleteBook = deleteBook
-        }
+        } :<|>
+      return "1.0.0" :<|>
+      return "App is UP"
 
 startApp :: IO ()
 startApp = run 8080 app
