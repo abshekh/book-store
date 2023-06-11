@@ -6,20 +6,19 @@ module Main
   ( main
   ) where
 
-import Prelude hiding (id)
-
 import Control.Monad.IO.Class
+import Data.Maybe
 import Database.SQLite.Simple
 import Models.Book
 import Network.Wai.Handler.Warp
-import Repository.BookRepository
+import qualified Repository.BookRepository as BR
 import Servant
 
 type API
-   = "books" :> Get '[ JSON] [Book] :<|> "books/add" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book
+   = "books" :> Get '[ JSON] [Book] :<|> "books" :> Capture "id" String :> Get '[ JSON] Book :<|> "books" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book :<|> "books" :> Capture "id" String :> Delete '[ JSON] NoContent
 
 server :: Server API
-server = getBooks :<|> postBook
+server = getAllBooks :<|> getBook :<|> postBook :<|> deleteBook
 
 api :: Proxy API
 api = Proxy
@@ -40,11 +39,21 @@ initDB dbfile =
 getDBFile :: FilePath
 getDBFile = "resources/test.db"
 
-postBook :: Book -> Handler Book
-postBook book = liftIO $ addBook getDBFile book
+getBook :: String -> Handler Book
+getBook id' = do
+  book <- liftIO $ BR.getBook getDBFile id'
+  if isJust book
+    then return $ fromJust book
+    else error "Book not found"
 
-getBooks :: Handler [Book]
-getBooks = liftIO $ getAllBooks $ getDBFile
+getAllBooks :: Handler [Book]
+getAllBooks = liftIO $ BR.getAllBooks getDBFile
+
+postBook :: Book -> Handler Book
+postBook book = liftIO $ BR.upsertBook getDBFile book
+
+deleteBook :: String -> Handler NoContent
+deleteBook id' = liftIO $ BR.deleteBook getDBFile id' >> return NoContent
 
 main :: IO ()
 main = initDB getDBFile >> startApp
