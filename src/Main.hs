@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Main
   ( main
@@ -13,18 +14,39 @@ import Models.Book
 import Network.Wai.Handler.Warp
 import qualified Repository.BookRepository as BR
 import Servant
+import Servant.API.Generic (Generic)
+import Servant.Server.Generic (genericServe, AsServer)
 
-type API
-   = "books" :> Get '[ JSON] [Book] :<|> "books" :> Capture "id" String :> Get '[ JSON] Book :<|> "books" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book :<|> "books" :> Capture "id" String :> Delete '[ JSON] NoContent
+-- type API
+--    = "books" :> Get '[ JSON] [Book] :<|> "books" :> Capture "id" String :> Get '[ JSON] Book :<|> "books" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book :<|> "books" :> Capture "id" String :> Delete '[ JSON] NoContent
 
-server :: Server API
-server = getAllBooks :<|> getBook :<|> postBook :<|> deleteBook
+data Routes mode = Routes
+    { _getAllBooks :: mode :- "books" :> Get '[ JSON] [Book]
+    , _getBook     :: mode :- "books" :> Capture "id" String :> Get '[ JSON] Book
+    , _postBook    :: mode :- "books" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book
+    , _deleteBook  :: mode :- "books" :> Capture "id" String :> Delete '[ JSON] NoContent
+    }
+  deriving (Generic)
 
-api :: Proxy API
-api = Proxy
+-- server :: Server API
+-- server = getAllBooks :<|> getBook :<|> postBook :<|> deleteBook
+
+-- api :: Proxy API
+-- api = Proxy
+
+server :: Routes AsServer
+server = Routes
+    { _getAllBooks = getAllBooks
+    , _getBook     = getBook
+    , _postBook    = postBook
+    , _deleteBook  = deleteBook
+    }
 
 app :: Application
-app = serve api server
+app = genericServe server
+
+-- app :: Application
+-- app = serve api server
 
 startApp :: IO ()
 startApp = run 8080 app
