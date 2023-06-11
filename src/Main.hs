@@ -15,10 +15,8 @@ import Network.Wai.Handler.Warp
 import qualified Repository.BookRepository as BR
 import Servant
 import Servant.API.Generic (Generic)
-import Servant.Server.Generic (AsServer, genericServe)
 
--- type API
---    = "books" :> Get '[ JSON] [Book] :<|> "books" :> Capture "id" String :> Get '[ JSON] Book :<|> "books" :> ReqBody '[ JSON] Book :> Post '[ JSON] Book :<|> "books" :> Capture "id" String :> Delete '[ JSON] NoContent
+type API = NamedRoutes Routes
 data Routes mode =
   Routes
     { _getAllBooks :: mode :- "books" :> Get '[ JSON] [Book]
@@ -28,24 +26,17 @@ data Routes mode =
     }
   deriving (Generic)
 
--- server :: Server API
--- server = getAllBooks :<|> getBook :<|> postBook :<|> deleteBook
--- api :: Proxy API
--- api = Proxy
-server :: Routes AsServer
-server =
-  Routes
-    { _getAllBooks = getAllBooks
-    , _getBook = getBook
-    , _postBook = postBook
-    , _deleteBook = deleteBook
-    }
-
 app :: Application
-app = genericServe server
+app = serve (Proxy @API) server
+  where
+    server =
+      Routes
+        { _getAllBooks = getAllBooks
+        , _getBook = getBook
+        , _postBook = postBook
+        , _deleteBook = deleteBook
+        }
 
--- app :: Application
--- app = serve api server
 startApp :: IO ()
 startApp = run 8080 app
 
