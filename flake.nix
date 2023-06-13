@@ -24,6 +24,11 @@
                 haskell-language-server
                 hindent
               ];
+
+              shellHook = ''
+                export PATH="${myHaskellPackages.haskell-language-server}/bin:$PATH"
+              '';
+
             };
           };
         };
