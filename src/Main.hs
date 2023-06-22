@@ -9,7 +9,6 @@ module Main
   ) where
 
 import Control.Monad.IO.Class
-import Data.Maybe
 import Database.SQLite.Simple
 import Models.Book
 import Network.Wai.Handler.Warp
@@ -58,9 +57,7 @@ getDBFile = "resources/test.db"
 getBook :: String -> Handler Book
 getBook id' = do
   book <- liftIO $ BR.getBook getDBFile id'
-  if isJust book
-    then return $ fromJust book
-    else error "Book not found"
+  maybe (error "Book not found") return book
 
 getAllBooks :: Handler [Book]
 getAllBooks = liftIO $ BR.getAllBooks getDBFile
